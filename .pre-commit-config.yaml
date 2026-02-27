@@ -1,0 +1,64 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: debug-statements
+
+  - repo: https://github.com/psf/black
+    rev: 24.4.2
+    hooks:
+      - id: black
+        language_version: python3.11
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: ['--profile', 'black']
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.1.0
+    hooks:
+      - id: flake8
+        args: ['--max-line-length=100', '--extend-ignore=E203,W503']
+
+  - repo: local
+    hooks:
+      - id: skill-validation
+        name: Validate Skill Spec
+        entry: python -c "
+          import yaml
+          import re
+          from pathlib import Path
+          skill_file = Path('skill/SKILL.md')
+          if not skill_file.exists():
+              print('ERROR: skill/SKILL.md not found')
+              exit(1)
+          content = skill_file.read_text()
+          match = re.match(r'^---\n(.*?)\n---', content, re.DOTALL)
+          if not match:
+              print('ERROR: No YAML frontmatter found')
+              exit(1)
+          frontmatter = yaml.safe_load(match.group(1))
+          required = ['name', 'description', 'version', 'dependencies']
+          missing = [f for f in required if f not in frontmatter]
+          if missing:
+              print(f'ERROR: Missing required fields: {missing}')
+              exit(1)
+          print('Skill validation passed!')
+          "
+        language: system
+        pass_filenames: false
+
+      - id: pytest-check
+        name: Run pytest
+        entry: pytest tests/unit/ --ignore=tests/integration/ --ignore=tests/e2e/ --ignore=tests/performance/
+        language: system
+        pass_filenames: false

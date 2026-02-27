@@ -1,0 +1,101 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag version (e.g., v1.0.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run full test suite
+        run: pytest tests/unit/ -v
+
+      - name: Validate skill
+        run: |
+          python -c "
+          import yaml
+          import re
+          from pathlib import Path
+
+          skill_file = Path('skill/SKILL.md')
+          content = skill_file.read_text()
+          match = re.match(r'^---\n(.*?)\n---', content, re.DOTALL)
+          frontmatter = yaml.safe_load(match.group(1))
+
+          required = ['name', 'description', 'version', 'dependencies']
+          missing = [f for f in required if f not in frontmatter]
+          if missing:
+              print(f'ERROR: Missing required fields: {missing}')
+              exit(1)
+          print('Skill validation passed!')
+          "
+
+      - name: Get version from tag
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.tag }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Releasing version: $VERSION"
+
+      - name: Package skill
+        run: |
+          VERSION="${{ steps.get_version.outputs.version }}"
+          mkdir -p dist
+          tar -czf "dist/ai-news-radar-${VERSION}.tar.gz" skill/ requirements.txt README.md
+
+      - name: Generate changelog
+        run: |
+          VERSION="${{ steps.get_version.outputs.version }}"
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          echo "## What's Changed" > changelog.md
+          if [ -n "$PREV_TAG" ]; then
+            git log ${PREV_TAG}..HEAD --oneline --no-decorate | sed 's/^/- /' >> changelog.md
+          else
+            echo "Initial release" >> changelog.md
+          fi
+          cat changelog.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.get_version.outputs.version }}
+          name: Release ${{ steps.get_version.outputs.version }}
+          body_path: changelog.md
+          files: dist/ai-news-radar-${{ steps.get_version.outputs.version }}.tar.gz
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

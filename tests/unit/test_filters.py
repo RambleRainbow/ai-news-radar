@@ -161,8 +161,8 @@ class TestDuplicateFilter:
         """Test filtering with no duplicates."""
         filter = DuplicateFilter()
         articles = [
-            {"title": "Article 1", "url": "https://example.com/1"},
-            {"title": "Article 2", "url": "https://example.com/2"},
+            {"title": "Artificial Intelligence Breakthrough", "url": "https://example.com/1"},
+            {"title": "Quantum Computing Milestone", "url": "https://example.com/2"},
         ]
         filtered = filter.filter(articles)
         assert len(filtered) == 2

@@ -1,0 +1,96 @@
+name: Skill Validation
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['main', 'worktree-*']
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Validate Skill Spec
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml
+
+      - name: Validate SKILL.md structure
+        run: |
+          python -c "
+          import yaml
+          import re
+          from pathlib import Path
+
+          skill_file = Path('skill/SKILL.md')
+          if not skill_file.exists():
+              print('ERROR: skill/SKILL.md not found')
+              exit(1)
+
+          # Extract frontmatter
+          content = skill_file.read_text()
+          match = re.match(r'^---\n(.*?)\n---', content, re.DOTALL)
+          if not match:
+              print('ERROR: No YAML frontmatter found')
+              exit(1)
+
+          frontmatter = yaml.safe_load(match.group(1))
+
+          # Check required fields
+          required = ['name', 'description', 'version', 'dependencies']
+          missing = [f for f in required if f not in frontmatter]
+          if missing:
+              print(f'ERROR: Missing required fields: {missing}')
+              exit(1)
+
+          # Validate version format
+          version = frontmatter['version']
+          if not re.match(r'^\d+\.\d+\.\d+', version):
+              print(f'ERROR: Invalid version format: {version}')
+              exit(1)
+
+          print('Skill validation passed!')
+          print(f'  Name: {frontmatter[\"name\"]}')
+          print(f'  Version: {version}')
+          "
+
+      - name: Validate directory structure
+        run: |
+          echo "Checking skill directory structure..."
+          test -f skill/SKILL.md || (echo "ERROR: skill/SKILL.md missing"; exit 1)
+          test -d skill/scripts || (echo "ERROR: skill/scripts missing"; exit 1)
+          test -d skill/assets || (echo "ERROR: skill/assets missing"; exit 1)
+          test -d skill/assets/data || (echo "ERROR: skill/assets/data missing"; exit 1)
+          echo "Directory structure valid!"
+
+      - name: Validate CLI entry point
+        run: |
+          python -c "
+          import sys
+          from pathlib import Path
+
+          main_script = Path('skill/scripts/main.py')
+          if not main_script.exists():
+              print('ERROR: skill/scripts/main.py not found')
+              sys.exit(1)
+
+          # Check for main function
+          content = main_script.read_text()
+          if 'def main():' not in content:
+              print('ERROR: main() function not found')
+              sys.exit(1)
+
+          print('CLI entry point validated!')
+          "

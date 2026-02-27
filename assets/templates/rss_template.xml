@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>AI News Radar</title>
+    <link>https://github.com/yourname/ai-news-radar</link>
+    <description>Aggregated AI and Technology News</description>
+    <language>en</language>
+    <atom:link href="https://example.com/feed.xml" rel="self" type="application/rss+xml"/>
+
+    {% for article in articles %}
+    <item>
+      <title>{{ article.title }}</title>
+      <link>{{ article.url }}</link>
+      <description>{{ article.description }}</description>
+      <pubDate>{{ article.date }}</pubDate>
+      <guid isPermaLink="true">{{ article.url }}</guid>
+      {% if article.source %}<source>{{ article.source }}</source>{% endif %}
+      {% if article.author %}<author>{{ article.author }}</author>{% endif %}
+      {% if article.tags %}
+      <category>{{ article.tags|join(', ') }}</category>
+      {% endif %}
+    </item>
+    {% endfor %}
+  </channel>
+</rss>

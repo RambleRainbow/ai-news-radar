@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Test Feed</title>
+    <link>https://example.com</link>
+    <description>Test RSS Feed</description>
+    <item>
+      <title>Artificial Intelligence Breakthrough</title>
+      <link>https://example.com/ai-breakthrough</link>
+      <description>A major breakthrough in AI research has been announced.</description>
+      <pubDate>Mon, 01 Jan 2024 12:00:00 GMT</pubDate>
+      <author>Test Author</author>
+      <category>AI</category>
+    </item>
+    <item>
+      <title>New Machine Learning Framework Released</title>
+      <link>https://example.com/ml-framework</link>
+      <description>A new open-source machine learning framework is now available.</description>
+      <pubDate>Mon, 01 Jan 2024 11:00:00 GMT</pubDate>
+      <author>Test Author</author>
+      <category>Machine Learning</category>
+    </item>
+    <item>
+      <title>Daily News Roundup</title>
+      <link>https://example.com/news</link>
+      <description>Today's top stories from around the web.</description>
+      <pubDate>Mon, 01 Jan 2024 10:00:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>

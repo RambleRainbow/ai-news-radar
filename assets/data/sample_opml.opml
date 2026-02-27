@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="1.0">
+  <head>
+    <title>AI News Feeds</title>
+  </head>
+  <body>
+    <outline text="AI Blogs" description="AI and ML Blogs">
+      <outline text="OpenAI Blog" xmlUrl="https://openai.com/blog/rss.xml" htmlUrl="https://openai.com/blog"/>
+      <outline text="Google AI Blog" xmlUrl="https://ai.googleblog.com/feeds/posts/default" htmlUrl="https://ai.googleblog.com"/>
+      <outline text="DeepMind Blog" xmlUrl="https://deepmind.com/blog/feed/basic" htmlUrl="https://deepmind.com/blog"/>
+    </outline>
+    <outline text="Tech News" description="Technology News Feeds">
+      <outline text="TechCrunch" xmlUrl="https://techcrunch.com/feed/" htmlUrl="https://techcrunch.com"/>
+      <outline text="The Verge" xmlUrl="https://www.theverge.com/rss/index.xml" htmlUrl="https://www.theverge.com"/>
+    </outline>
+  </body>
+</opml>

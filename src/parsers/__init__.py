@@ -9,8 +9,8 @@ This package contains parsers for different types of news sources:
 """
 
 from .base_parser import BaseParser
-from .rss_parser import RSSParser
 from .html_parser import HTMLParser
+from .rss_parser import RSSParser
 
 __all__ = [
     "BaseParser",

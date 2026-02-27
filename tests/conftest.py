@@ -4,9 +4,9 @@ Global pytest fixtures and configuration for AI News Radar tests.
 
 import sys
 import tempfile
-from pathlib import Path
 from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Any, Generator
+from pathlib import Path
+from typing import Any, Dict, Generator, List
 
 import pytest
 import yaml
@@ -17,9 +17,11 @@ src_path = project_root / "src"
 if str(src_path) not in sys.path:
     sys.path.insert(0, str(src_path))
 
+
 # ============================================================================
 # Pytest Configuration
 # ============================================================================
+
 
 def pytest_configure(config):
     """Configure pytest with custom settings."""
@@ -34,6 +36,7 @@ def pytest_configure(config):
 # ============================================================================
 # Path Fixtures
 # ============================================================================
+
 
 @pytest.fixture(scope="session")
 def project_root() -> Path:
@@ -61,6 +64,7 @@ def temp_dir() -> Generator[Path, None, None]:
 # ============================================================================
 # Sample Data Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def sample_articles() -> List[Dict[str, Any]]:
@@ -131,6 +135,7 @@ def test_keywords() -> Dict[str, List[str]]:
 # Component Fixtures
 # ============================================================================
 
+
 @pytest.fixture
 def sample_config(temp_dir: Path) -> Generator[Dict[str, Any], None, None]:
     """Create a sample RadarConfig."""
@@ -152,6 +157,7 @@ def sample_config(temp_dir: Path) -> Generator[Dict[str, Any], None, None]:
 # Test Data Files Setup
 # ============================================================================
 
+
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_data_files(fixtures_dir: Path):
     """
@@ -165,7 +171,11 @@ def setup_test_data_files(fixtures_dir: Path):
     if not test_keywords_file.exists():
         test_keywords = {
             "keywords": {
-                "primary": ["artificial intelligence", "machine learning", "deep learning"],
+                "primary": [
+                    "artificial intelligence",
+                    "machine learning",
+                    "deep learning",
+                ],
                 "secondary": ["chatgpt", "gpt", "openai", "anthropic"],
                 "aliases": ["ai", "ml", "llm"],
             }

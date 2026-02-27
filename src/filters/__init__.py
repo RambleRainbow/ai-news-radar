@@ -8,8 +8,8 @@ This package contains filters for processing aggregated news:
 """
 
 from .ai_topic_filter import AITopicFilter
-from .time_filter import TimeFilter
 from .duplicate_filter import DuplicateFilter
+from .time_filter import TimeFilter
 
 __all__ = [
     "AITopicFilter",

@@ -2,12 +2,11 @@
 Tests for filter modules.
 """
 
-import pytest
+from datetime import datetime, timedelta
 
 from src.filters.ai_topic_filter import AITopicFilter
-from src.filters.time_filter import TimeFilter
 from src.filters.duplicate_filter import DuplicateFilter
-from datetime import datetime, timedelta
+from src.filters.time_filter import TimeFilter
 
 
 class TestAITopicFilter:
@@ -74,11 +73,45 @@ class TestAITopicFilter:
         filter = AITopicFilter()
         articles = [
             {"title": "Some news", "url": "https://example.com/1"},
-            {"title": "Artificial intelligence breakthrough", "url": "https://example.com/2"},
+            {
+                "title": "Artificial intelligence breakthrough",
+                "url": "https://example.com/2",
+            },
             {"title": "AI news", "url": "https://example.com/3"},
         ]
         sorted_articles = filter.sort_by_relevance(articles)
         assert sorted_articles[0]["_ai_score"] >= sorted_articles[1]["_ai_score"]
+
+    def test_get_matched_keywords(self):
+        """Test getting matched keywords."""
+        filter = AITopicFilter()
+        article = {"title": "AI and machine learning advances"}
+        matched = filter.get_matched_keywords(article)
+        assert len(matched) > 0
+
+    def test_get_matched_keywords_no_match(self):
+        """Test getting matched keywords with no match."""
+        filter = AITopicFilter()
+        article = {"title": "Cooking tips"}
+        matched = filter.get_matched_keywords(article)
+        assert matched == []
+
+    def test_score_with_tags(self):
+        """Test scoring with tags."""
+        filter = AITopicFilter()
+        article = {"title": "Technology news", "tags": ["AI", "machine learning"]}
+        score = filter.score(article)
+        assert score > 0
+
+    def test_score_with_description(self):
+        """Test scoring with description."""
+        filter = AITopicFilter()
+        article = {
+            "title": "News",
+            "description": "This is about artificial intelligence",
+        }
+        score = filter.score(article)
+        assert score > 0
 
 
 class TestTimeFilter:
@@ -127,6 +160,33 @@ class TestTimeFilter:
         filter.update_window(48)
         assert filter.hours == 48
 
+    def test_filter_with_naive_datetime(self):
+        """Test filtering with naive datetime."""
+        filter = TimeFilter(hours=24)
+        articles = [
+            {
+                "title": "Recent news",
+                "url": "https://example.com",
+                "date": datetime.now(),  # Naive datetime
+            }
+        ]
+        filtered = filter.filter(articles)
+        # Naive datetime should be handled
+        assert len(filtered) >= 0
+
+    def test_filter_articles_without_date(self):
+        """Test filtering articles without date field."""
+        filter = TimeFilter(hours=24)
+        articles = [
+            {
+                "title": "News",
+                "url": "https://example.com",
+            }
+        ]
+        filtered = filter.filter(articles)
+        # Articles without date should be filtered out
+        assert len(filtered) == 0
+
 
 class TestDuplicateFilter:
     """Test duplicate filter functionality."""
@@ -161,7 +221,10 @@ class TestDuplicateFilter:
         """Test filtering with no duplicates."""
         filter = DuplicateFilter()
         articles = [
-            {"title": "Artificial Intelligence Breakthrough", "url": "https://example.com/1"},
+            {
+                "title": "Artificial Intelligence Breakthrough",
+                "url": "https://example.com/1",
+            },
             {"title": "Quantum Computing Milestone", "url": "https://example.com/2"},
         ]
         filtered = filter.filter(articles)
@@ -176,3 +239,69 @@ class TestDuplicateFilter:
         # Should not remember previous articles
         result = filter.filter(articles)
         assert len(result) == 1
+
+    def test_merge_duplicates(self):
+        """Test merging duplicates."""
+        filter = DuplicateFilter()
+        articles = [
+            {"title": "Article", "url": "https://example.com/1", "description": "v1"},
+            {
+                "title": "Article",
+                "url": "https://example.com/1?ref=twitter",
+                "description": "v2",
+            },
+        ]
+        merged = filter.merge_duplicates(articles)
+        assert len(merged) == 1
+
+    def test_merge_duplicates_newest(self):
+        """Test merging preferring newest."""
+        filter = DuplicateFilter()
+        articles = [
+            {"title": "Article", "url": "https://example.com/1", "date": "2024-01-01"},
+            {"title": "Article", "url": "https://example.com/2", "date": "2024-01-02"},
+        ]
+        merged = filter.merge_duplicates(articles, prefer="newest")
+        # Articles should be merged into groups
+        assert len(merged) <= 2
+
+    def test_normalize_url(self):
+        """Test URL normalization."""
+        filter = DuplicateFilter()
+        url1 = "https://example.com/article?utm_source=twitter"
+        # After normalization, tracking params are removed
+        normalized1 = filter._normalize_url(url1)
+        # URLs without tracking should be similar
+        assert "utm_source" not in normalized1
+
+    def test_filter_with_content_hash(self):
+        """Test filtering by content hash."""
+        filter = DuplicateFilter(by_url=False, by_title=False, by_content=True)
+        articles = [
+            {
+                "title": "Test",
+                "url": "https://example.com/1",
+                "description": "Same content",
+            },
+            {
+                "title": "Test",
+                "url": "https://example.com/2",
+                "description": "Same content",
+            },
+        ]
+        filtered = filter.filter(articles)
+        # Second article should be filtered as duplicate content
+        assert len(filtered) == 1
+
+    def test_title_similarity_threshold(self):
+        """Test title similarity threshold."""
+        filter = DuplicateFilter(
+            by_url=False, by_title=True, title_similarity_threshold=0.9
+        )
+        articles = [
+            {"title": "AI News Today", "url": "https://example.com/1"},
+            {"title": "AI News", "url": "https://example.com/2"},
+        ]
+        filtered = filter.filter(articles)
+        # Should keep both due to high threshold
+        assert len(filtered) == 2

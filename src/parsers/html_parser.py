@@ -5,9 +5,10 @@ This module provides parsing capabilities for HTML web pages using BeautifulSoup
 """
 
 import logging
-from typing import List, Dict, Any, Optional
 from datetime import datetime
-from urllib.parse import urljoin, urlparse
+from typing import Any, Dict, List, Optional
+from urllib.parse import urljoin
+
 import requests
 from bs4 import BeautifulSoup
 from dateutil import parser as date_parser
@@ -38,9 +39,7 @@ class HTMLParser(BaseParser):
         """
         super().__init__(config)
         self.timeout = self.config.get("timeout", 30)
-        self.user_agent = self.config.get(
-            "user_agent", "AI News Radar/1.0"
-        )
+        self.user_agent = self.config.get("user_agent", "AI News Radar/1.0")
         self.proxies = self.config.get("proxies")
         self.default_selector = self.config.get("selector", "article")
         self.max_articles = self.config.get("max_articles")
@@ -98,7 +97,9 @@ class HTMLParser(BaseParser):
             ParseError: If parsing fails
         """
         source_url = kwargs.get("source_url", "")
-        source_name = kwargs.get("source_name", self.config.get("source_name", "HTML Source"))
+        source_name = kwargs.get(
+            "source_name", self.config.get("source_name", "HTML Source")
+        )
         selector = kwargs.get("selector", self.default_selector)
         max_articles = kwargs.get("max_articles", self.max_articles)
         field_selectors = kwargs.get("field_selectors", self.field_selectors)
@@ -152,12 +153,22 @@ class HTMLParser(BaseParser):
         """
         try:
             # Get selectors (use custom or default)
-            title_selector = field_selectors.get("title", "h2, h3, .title, [class*='title']")
+            title_selector = field_selectors.get(
+                "title", "h2, h3, .title, [class*='title']"
+            )
             link_selector = field_selectors.get("link", "a[href]")
-            desc_selector = field_selectors.get("description", "p, .desc, .description, .summary")
-            date_selector = field_selectors.get("date", ".date, time, [datetime], [class*='date']")
-            author_selector = field_selectors.get("author", ".author, [class*='author']")
-            tag_selector = field_selectors.get("tags", ".tag, .category, [class*='tag']")
+            desc_selector = field_selectors.get(
+                "description", "p, .desc, .description, .summary"
+            )
+            date_selector = field_selectors.get(
+                "date", ".date, time, [datetime], [class*='date']"
+            )
+            author_selector = field_selectors.get(
+                "author", ".author, [class*='author']"
+            )
+            tag_selector = field_selectors.get(
+                "tags", ".tag, .category, [class*='tag']"
+            )
 
             # Title
             title_elem = element.select_one(title_selector)
@@ -269,7 +280,7 @@ class HTMLParser(BaseParser):
                 if "url(" in style:
                     start = style.find("url(") + 4
                     end = style.find(")", start)
-                    img_url = style[start:end].strip('"\'')
+                    img_url = style[start:end].strip("\"'")
                     if img_url:
                         return urljoin(base_url, img_url)
 

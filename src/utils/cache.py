@@ -10,7 +10,7 @@ import logging
 import pickle
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional, Any, Callable
+from typing import Any, Callable, Optional
 
 logger = logging.getLogger(__name__)
 

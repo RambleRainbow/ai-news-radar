@@ -7,6 +7,7 @@ This module provides functions for parsing, formatting, and comparing dates.
 import logging
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Union
+
 from dateutil import parser as date_parser
 
 logger = logging.getLogger(__name__)
@@ -44,7 +45,10 @@ def parse_date(date_value: Optional[Union[str, datetime]]) -> Optional[datetime]
     return None
 
 
-def format_date(date_value: Optional[Union[str, datetime]], format_string: str = "%Y-%m-%d %H:%M:%S") -> str:
+def format_date(
+    date_value: Optional[Union[str, datetime]],
+    format_string: str = "%Y-%m-%d %H:%M:%S",
+) -> str:
     """
     Format a date value as a string.
 

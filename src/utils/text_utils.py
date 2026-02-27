@@ -6,7 +6,7 @@ This module provides functions for cleaning and processing text.
 
 import logging
 import re
-from typing import List, Set, Optional
+from typing import List
 
 logger = logging.getLogger(__name__)
 
@@ -114,7 +114,7 @@ def truncate_text(text: str, max_length: int = 200, suffix: str = "...") -> str:
         return text
 
     # Truncate at word boundary
-    truncated = text[:max_length - len(suffix)]
+    truncated = text[: max_length - len(suffix)]
     last_space = truncated.rfind(" ")
 
     if last_space > 0:

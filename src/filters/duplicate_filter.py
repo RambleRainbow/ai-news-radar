@@ -4,10 +4,11 @@ Duplicate filter for AI News Radar.
 This module removes duplicate articles based on URL, title similarity, or content hash.
 """
 
-import logging
 import hashlib
-from typing import List, Dict, Set, Optional
+import logging
+import re
 from difflib import SequenceMatcher
+from typing import Dict, List, Set
 
 logger = logging.getLogger(__name__)
 

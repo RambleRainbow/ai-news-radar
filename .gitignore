@@ -7,6 +7,10 @@ __pycache__/
 venv/
 env/
 ENV/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
 
 # IDE
 .vscode/
@@ -22,3 +26,14 @@ data/
 # OS
 .DS_Store
 Thumbs.db
+
+# Coverage
+.coverage.*
+htmlcov/
+
+# News output (generated)
+news*.json
+news*.csv
+
+# Cache
+.cache/

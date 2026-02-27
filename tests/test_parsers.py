@@ -5,8 +5,8 @@ Tests for parser modules.
 import pytest
 from datetime import datetime
 
-from scripts.parsers.rss_parser import RSSParser
-from scripts.parsers.html_parser import HTMLParser
+from src.parsers.rss_parser import RSSParser
+from src.parsers.html_parser import HTMLParser
 
 
 class TestRSSParser:

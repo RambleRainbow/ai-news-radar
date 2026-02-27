@@ -4,9 +4,9 @@ Tests for filter modules.
 
 import pytest
 
-from scripts.filters.ai_topic_filter import AITopicFilter
-from scripts.filters.time_filter import TimeFilter
-from scripts.filters.duplicate_filter import DuplicateFilter
+from src.filters.ai_topic_filter import AITopicFilter
+from src.filters.time_filter import TimeFilter
+from src.filters.duplicate_filter import DuplicateFilter
 from datetime import datetime, timedelta
 
 

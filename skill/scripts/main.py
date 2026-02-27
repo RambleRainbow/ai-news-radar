@@ -6,14 +6,24 @@ This module provides the main API for aggregating AI news from multiple sources.
 """
 
 import logging
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
-from .config import RadarConfig, load_default_config
-from .parsers import RSSParser, HTMLParser
-from .filters import AITopicFilter, TimeFilter, DuplicateFilter
-from .storage import JSONStorage
+# Add src to path for imports
+script_dir = Path(__file__).resolve().parent.parent.parent
+src_path = script_dir / "src"
+if str(src_path) not in sys.path:
+    sys.path.insert(0, str(src_path))
+
+from config import RadarConfig, load_default_config
+from parsers.rss_parser import RSSParser
+from parsers.html_parser import HTMLParser
+from filters.ai_topic_filter import AITopicFilter
+from filters.time_filter import TimeFilter
+from filters.duplicate_filter import DuplicateFilter
+from storage.json_storage import JSONStorage
 
 logger = logging.getLogger(__name__)
 
@@ -379,7 +389,7 @@ def main():
 
 def setup_logger(verbose: bool = False):
     """Setup logging."""
-    from .utils.logger import setup_logger as _setup_logger
+    from utils.logger import setup_logger as _setup_logger
 
     return _setup_logger(
         "ai_news_radar",

@@ -82,7 +82,7 @@ python scripts/main.py --verbose
 
 ### Configuration Files
 
-Located in `assets/data/`:
+Located in `assets/data/` (inside the skill package):
 
 #### `sources.yaml`
 
@@ -138,93 +138,47 @@ keywords:
 
 ### Configuration API
 
-Use `scripts/config.py` to manage configuration:
+Use `scripts/main.py` to run the aggregator. The configuration is managed internally with `assets/data/` files:
 
-```python
-from scripts.config import RadarConfig
-
-# Load from file
-config = RadarConfig.from_yaml('assets/data/sources.yaml')
-
-# Create programmatically
-config = RadarConfig(
-    sources_file='path/to/sources.yaml',
-    keywords_file='path/to/keywords.yaml',
-    update_interval_hours=24
-)
+```yaml
+# assets/data/sources.yaml - configure news sources
+# assets/data/keywords.yaml - configure AI filtering keywords
 ```
 
 ## Usage Examples
 
 ### Example 1: Basic Aggregation
 
-```python
-from scripts.main import NewsRadar
+Run the default aggregator:
 
-# Create radar instance
-radar = NewsRadar()
-
-# Aggregate news
-articles = radar.aggregate()
-
-# Save to file
-radar.save_to_json(articles, 'news.json')
+```bash
+python scripts/main.py
 ```
 
-### Example 2: Custom Filtering
+This will aggregate news from all configured sources in `assets/data/sources.yaml` and save to `news.json`.
 
-```python
-from scripts.main import NewsRadar
-from scripts.filters.ai_topic_filter import AITopicFilter
-from scripts.filters.time_filter import TimeFilter
+### Example 2: Custom Sources
 
-# Create radar
-radar = NewsRadar()
+Edit `assets/data/sources.yaml` to add custom news sources:
 
-# Apply custom filters
-ai_filter = AITopicFilter('assets/data/keywords.yaml')
-time_filter = TimeFilter(hours=24)
-
-articles = radar.aggregate()
-articles = ai_filter.filter(articles)
-articles = time_filter.filter(articles)
-
-print(f"Found {len(articles)} AI-related articles from last 24 hours")
+```yaml
+sources:
+  - name: My Custom Source
+    url: https://example.com/news
+    type: rss
+    url_template: https://example.com/news/feed/
+    max_articles: 10
 ```
 
-### Example 3: Add Custom Source
+### Example 3: OPML Import
 
-```python
-from scripts.parsers.html_parser import HTMLParser
-from scripts.main import NewsRadar
+Place your OPML file in `assets/data/` and reference it in `sources.yaml`:
 
-# Create custom parser
-class CustomSourceParser(HTMLParser):
-    def parse(self, content):
-        articles = super().parse(content)
-        # Custom parsing logic
-        return articles
-
-# Register parser
-radar = NewsRadar()
-radar.register_parser('custom_source', CustomSourceParser)
-```
-
-### Example 4: OPML Import
-
-```python
-from scripts.parsers.rss_parser import RSSParser
-from scripts.utils.opml_reader import OPMLReader
-
-# Read OPML file
-opml_reader = OPMLReader()
-feeds = opml_reader.read('assets/data/my_feeds.opml')
-
-# Aggregate from OPML feeds
-parser = RSSParser()
-for feed in feeds:
-    articles = parser.fetch_and_parse(feed['url'])
-    # Process articles
+```yaml
+- name: My RSS Feeds
+  type: opml
+  file_path: assets/data/my_feeds.opml
+  max_articles: 30
 ```
 
 ## API Reference
@@ -232,7 +186,7 @@ for feed in feeds:
 ### Command Line Interface
 
 ```bash
-python scripts/main.py [OPTIONS]
+python skill/scripts/main.py [OPTIONS]
 ```
 
 **Options:**
@@ -456,14 +410,7 @@ pip install -r requirements.txt
 
 **Issue**: `Connection timeout when fetching sources`
 
-**Solution**: Increase timeout or use proxy
-```python
-# In scripts/config.py
-RadarConfig(
-    request_timeout=30,  # Increase timeout
-    proxies={'http': 'http://proxy:port'}  # Use proxy
-)
-```
+**Solution**: Increase timeout or use proxy. Edit `skill/scripts/main.py` or set environment variables.
 
 ---
 
@@ -472,10 +419,7 @@ RadarConfig(
 **Solution**: Check source configuration and filters
 ```bash
 # Run with verbose logging
-python scripts/main.py --verbose
-
-# Temporarily disable filters
-python scripts/main.py --no-filter
+python skill/scripts/main.py --verbose
 ```
 
 ---
@@ -497,12 +441,12 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 # Or use command line
-python scripts/main.py --verbose
+python skill/scripts/main.py --verbose
 ```
 
 ### Testing
 
-Run tests:
+For development, run tests from project root:
 
 ```bash
 # Run all tests
@@ -512,7 +456,7 @@ pytest tests/
 pytest tests/test_parsers.py
 
 # Run with coverage
-pytest --cov=scripts tests/
+pytest --cov=src tests/
 ```
 
 ## Performance Tuning
@@ -566,18 +510,19 @@ print(f"Time: {stats['duration']}s")
 
 ## References
 
-- **Architecture**: `references/ARCHITECTURE.md` - System architecture and design
-- **Deployment**: `references/DEPLOYMENT.md` - Deployment and CI/CD setup
-- **Source Mapping**: `references/SOURCE_MAPPING.md` - News source configurations
-- **Filtering Rules**: `references/FILTERING_RULES.md` - Filtering algorithm details
+For detailed documentation, see the project's `docs/` directory:
+- **Architecture**: `docs/ARCHITECTURE.md` - System architecture and design
+- **Deployment**: `docs/DEPLOYMENT.md` - Deployment and CI/CD setup
+- **Source Mapping**: `docs/SOURCE_MAPPING.md` - News source configurations
+- **Filtering Rules**: `docs/FILTERING_RULES.md` - Filtering algorithm details
 
 ## Contributing
 
 To extend this skill:
 
-1. Add new parsers in `scripts/parsers/`
-2. Add new filters in `scripts/filters/`
-3. Update documentation in `references/`
+1. Add new parsers in `src/parsers/`
+2. Add new filters in `src/filters/`
+3. Update documentation in `docs/`
 4. Add tests in `tests/`
 5. Update `SKILL.md` with new features
 

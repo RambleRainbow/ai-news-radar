@@ -5,11 +5,11 @@ This module provides parsing capabilities for RSS and Atom feeds using feedparse
 """
 
 import logging
-from typing import List, Dict, Any, Optional
 from datetime import datetime
-import requests
+from typing import Any, Dict, List, Optional
+
 import feedparser
-from dateutil import parser as date_parser
+import requests
 
 from .base_parser import BaseParser, FetchError, ParseError
 
@@ -39,9 +39,7 @@ class RSSParser(BaseParser):
         """
         super().__init__(config)
         self.timeout = self.config.get("timeout", 30)
-        self.user_agent = self.config.get(
-            "user_agent", "AI News Radar/1.0"
-        )
+        self.user_agent = self.config.get("user_agent", "AI News Radar/1.0")
         self.proxies = self.config.get("proxies")
         self.max_entries = self.config.get("max_entries")
 
@@ -93,7 +91,9 @@ class RSSParser(BaseParser):
         Raises:
             ParseError: If parsing fails
         """
-        source_name = kwargs.get("source_name", self.config.get("source_name", "RSS Feed"))
+        source_name = kwargs.get(
+            "source_name", self.config.get("source_name", "RSS Feed")
+        )
         max_entries = kwargs.get("max_entries", self.max_entries)
 
         try:
@@ -104,7 +104,7 @@ class RSSParser(BaseParser):
                 logger.warning(f"Feed parsing warning: {feed.get('bozo_exception')}")
 
             if not feed.get("entries"):
-                logger.debug(f"No entries found in feed")
+                logger.debug("No entries found in feed")
                 return []
 
             # Get feed metadata
@@ -242,17 +242,26 @@ class RSSParser(BaseParser):
                 - type: Feed type (usually 'rss')
         """
         try:
-            content = self.fetch(file_path if file_path.startswith(("http://", "https://")) else f"file://{file_path}")
+            url = (
+                file_path
+                if file_path.startswith(("http://", "https://"))
+                else f"file://{file_path}"
+            )
+            content = self.fetch(url)
             feed = feedparser.parse(content)
 
             feeds = []
             for outline in feed.get("entries", []):
                 if outline.get("type") == "rss" or "xmlUrl" in outline:
-                    feeds.append({
-                        "title": outline.get("title", outline.get("text", "Unknown")),
-                        "url": outline.get("xmlUrl", ""),
-                        "type": "rss",
-                    })
+                    feeds.append(
+                        {
+                            "title": outline.get(
+                                "title", outline.get("text", "Unknown")
+                            ),
+                            "url": outline.get("xmlUrl", ""),
+                            "type": "rss",
+                        }
+                    )
 
             logger.info(f"Found {len(feeds)} RSS feeds in OPML file")
             return feeds

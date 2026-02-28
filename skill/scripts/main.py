@@ -5,25 +5,27 @@ AI News Radar - Main entry point.
 This module provides the main API for aggregating AI news from multiple sources.
 """
 
+# Add src to path for imports
 import logging
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
-# Add src to path for imports
+import click
+
 script_dir = Path(__file__).resolve().parent.parent.parent
 src_path = script_dir / "src"
 if str(src_path) not in sys.path:
     sys.path.insert(0, str(src_path))
 
-from config import RadarConfig, load_default_config
-from parsers.rss_parser import RSSParser
-from parsers.html_parser import HTMLParser
-from filters.ai_topic_filter import AITopicFilter
-from filters.time_filter import TimeFilter
-from filters.duplicate_filter import DuplicateFilter
-from storage.json_storage import JSONStorage
+from config import RadarConfig, load_default_config  # noqa: E402
+from filters.ai_topic_filter import AITopicFilter  # noqa: E402
+from filters.duplicate_filter import DuplicateFilter  # noqa: E402
+from filters.time_filter import TimeFilter  # noqa: E402
+from parsers.html_parser import HTMLParser  # noqa: E402
+from parsers.rss_parser import RSSParser  # noqa: E402
+from storage.json_storage import JSONStorage  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -46,22 +48,24 @@ class NewsRadar:
         self.config.ensure_directories()
 
         # Initialize parsers
-        self.rss_parser = RSSParser({
-            "timeout": self.config.request_timeout,
-            "user_agent": self.config.user_agent,
-            "proxies": self.config.proxies,
-        })
+        self.rss_parser = RSSParser(
+            {
+                "timeout": self.config.request_timeout,
+                "user_agent": self.config.user_agent,
+                "proxies": self.config.proxies,
+            }
+        )
 
-        self.html_parser = HTMLParser({
-            "timeout": self.config.request_timeout,
-            "user_agent": self.config.user_agent,
-            "proxies": self.config.proxies,
-        })
+        self.html_parser = HTMLParser(
+            {
+                "timeout": self.config.request_timeout,
+                "user_agent": self.config.user_agent,
+                "proxies": self.config.proxies,
+            }
+        )
 
         # Initialize filters
-        self.ai_filter = AITopicFilter(
-            keywords_file=self.config.keywords_file
-        )
+        self.ai_filter = AITopicFilter(keywords_file=self.config.keywords_file)
         self.time_filter = TimeFilter(hours=self.config.update_interval_hours)
         self.duplicate_filter = DuplicateFilter(
             by_url=self.config.enable_deduplication,
@@ -103,7 +107,8 @@ class NewsRadar:
         self.stats["total_kept"] = len(filtered)
 
         logger.info(
-            f"Aggregation complete: {self.stats['total_kept']}/{self.stats['total_fetched']} articles kept"
+            f"Aggregation complete: {self.stats['total_kept']}/"
+            f"{self.stats['total_fetched']} articles kept"
         )
 
         return filtered
@@ -151,20 +156,24 @@ class NewsRadar:
             if source_type == "rss":
                 parser = self.rss_parser
                 kwargs = {
-                    "max_entries": source.get("max_articles", self.config.max_articles_per_source),
+                    "max_entries": source.get(
+                        "max_articles", self.config.max_articles_per_source
+                    ),
                 }
             elif source_type == "html":
                 parser = self.html_parser
                 kwargs = {
                     "selector": source.get("selector"),
-                    "max_articles": source.get("max_articles", self.config.max_articles_per_source),
+                    "max_articles": source.get(
+                        "max_articles", self.config.max_articles_per_source
+                    ),
                     "field_selectors": source.get("field_selectors", {}),
                 }
             elif source_type == "opml":
                 # OPML file - parse feeds from it
                 feeds = self.rss_parser.parse_opml(source.get("file_path", url))
                 articles = []
-                for feed in feeds[:source.get("max_feeds", 10)]:
+                for feed in feeds[: source.get("max_feeds", 10)]:
                     feed_articles = self.rss_parser.fetch_and_parse(
                         feed["url"],
                         source_name=feed.get("title"),
@@ -293,27 +302,30 @@ class NewsRadar:
 
 def main():
     """Main entry point for command-line usage."""
-    import click
 
     @click.command()
     @click.option(
-        "--output", "-o",
+        "--output",
+        "-o",
         default="news.json",
         help="Output file path",
     )
     @click.option(
-        "--config", "-c",
+        "--config",
+        "-c",
         type=click.Path(exists=True),
         help="Custom configuration file",
     )
     @click.option(
-        "--format", "-f",
+        "--format",
+        "-f",
         type=click.Choice(["json", "csv"]),
         default="json",
         help="Output format",
     )
     @click.option(
-        "--verbose", "-v",
+        "--verbose",
+        "-v",
         is_flag=True,
         help="Enable verbose logging",
     )
@@ -376,7 +388,7 @@ def main():
             radar.save_to_csv(articles, output)
 
         # Print summary
-        click.echo(f"\nSummary:")
+        click.echo("\nSummary:")
         click.echo(f"  Total articles: {stats['total_fetched']}")
         click.echo(f"  After filtering: {stats['total_kept']}")
         click.echo(f"  Sources processed: {stats['sources_processed']}")

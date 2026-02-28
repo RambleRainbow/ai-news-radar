@@ -6,8 +6,8 @@ This module filters articles by AI-related keywords and topics.
 
 import logging
 import re
-from typing import List, Dict, Set, Optional
 from pathlib import Path
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,11 @@ class AITopicFilter:
     and aliases for matching.
     """
 
-    def __init__(self, keywords_file: Optional[Path] = None, keywords: Optional[Dict[str, List[str]]] = None):
+    def __init__(
+        self,
+        keywords_file: Optional[Path] = None,
+        keywords: Optional[Dict[str, List[str]]] = None,
+    ):
         """
         Initialize the AI topic filter.
 
@@ -68,10 +72,15 @@ class AITopicFilter:
 
         # Compile regex patterns for efficient matching
         self.primary_patterns = self._compile_patterns(self.keywords.get("primary", []))
-        self.secondary_patterns = self._compile_patterns(self.keywords.get("secondary", []))
+        self.secondary_patterns = self._compile_patterns(
+            self.keywords.get("secondary", [])
+        )
         self.alias_patterns = self._compile_patterns(self.keywords.get("aliases", []))
 
-        logger.debug(f"AI Topic Filter initialized with {len(self.primary_patterns)} primary patterns")
+        logger.debug(
+            f"AI Topic Filter initialized with "
+            f"{len(self.primary_patterns)} primary patterns"
+        )
 
     def _load_keywords(self, keywords_file: Path) -> Dict[str, List[str]]:
         """
@@ -134,7 +143,10 @@ class AITopicFilter:
                 article["_ai_score"] = score
                 filtered.append(article)
 
-        logger.info(f"AI Topic Filter: {len(filtered)}/{len(articles)} articles passed (min_score={min_score})")
+        logger.info(
+            f"AI Topic Filter: {len(filtered)}/{len(articles)} articles passed "
+            f"(min_score={min_score})"
+        )
         return filtered
 
     def score(self, article: Dict) -> float:
@@ -215,13 +227,17 @@ class AITopicFilter:
         matched = []
 
         # Check all patterns
-        for pattern in self.primary_patterns + self.secondary_patterns + self.alias_patterns:
+        for pattern in (
+            self.primary_patterns + self.secondary_patterns + self.alias_patterns
+        ):
             if pattern.search(text_lower):
                 matched.append(pattern.pattern)
 
         return matched
 
-    def sort_by_relevance(self, articles: List[Dict], reverse: bool = True) -> List[Dict]:
+    def sort_by_relevance(
+        self, articles: List[Dict], reverse: bool = True
+    ) -> List[Dict]:
         """
         Sort articles by AI relevance score.
 

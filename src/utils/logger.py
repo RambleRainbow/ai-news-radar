@@ -7,6 +7,7 @@ This module provides logging setup and utilities.
 import logging
 import sys
 from pathlib import Path
+from typing import Optional
 
 
 def setup_logger(

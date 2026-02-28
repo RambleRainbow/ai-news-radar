@@ -8,7 +8,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -122,7 +122,9 @@ class JSONStorage:
         combined = existing + new_articles
         self.save(combined)
 
-        logger.info(f"Appended {len(new_articles)} new articles (total: {len(combined)})")
+        logger.info(
+            f"Appended {len(new_articles)} new articles (total: {len(combined)})"
+        )
 
     def get_by_source(self, source: str) -> List[Dict[str, Any]]:
         """

@@ -5,9 +5,9 @@ Configuration management for AI News Radar.
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Any, Optional, List
-import yaml
+from typing import Any, Dict, List, Optional
 
+import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -17,8 +17,12 @@ class RadarConfig:
     """Configuration data class for AI News Radar."""
 
     # File paths
-    sources_file: Path = field(default_factory=lambda: Path("skill/assets/data/sources.yaml"))
-    keywords_file: Path = field(default_factory=lambda: Path("skill/assets/data/keywords.yaml"))
+    sources_file: Path = field(
+        default_factory=lambda: Path("skill/assets/data/sources.yaml")
+    )
+    keywords_file: Path = field(
+        default_factory=lambda: Path("skill/assets/data/keywords.yaml")
+    )
 
     # Core settings
     update_interval_hours: int = 24

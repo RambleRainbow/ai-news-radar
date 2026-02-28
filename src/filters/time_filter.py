@@ -6,7 +6,7 @@ This module filters articles by publication time window.
 
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 

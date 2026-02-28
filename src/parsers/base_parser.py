@@ -4,10 +4,10 @@ Base parser class for AI News Radar.
 This module defines the abstract base class that all parsers must implement.
 """
 
-from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional
-from datetime import datetime
 import logging
+from abc import ABC, abstractmethod
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +108,9 @@ class BaseParser(ABC):
                     norm["date"] = date
                 elif isinstance(date, str):
                     try:
-                        norm["date"] = datetime.fromisoformat(date.replace("Z", "+00:00"))
+                        norm["date"] = datetime.fromisoformat(
+                            date.replace("Z", "+00:00")
+                        )
                     except (ValueError, AttributeError):
                         logger.warning(f"Could not parse date: {date}")
                         norm["date"] = None

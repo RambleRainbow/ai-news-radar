@@ -1,0 +1,151 @@
+# AI News Aggregation Sources Configuration
+#
+# This file contains all data sources for AI/tech news aggregation.
+# Sources are categorized by type and reliability.
+
+## RSS Feed Sources
+
+### Core AI/Tech RSS Feeds
+
+```yaml
+sources:
+  - name: InfoQ 推荐
+    url: https://www.infoq.cn/feed
+    type: rss
+    description: AI and tech news aggregator
+    language: zh
+    priority: 10
+
+  - name: Hugging Face Blog (中文)
+    url: https://huggingface.co/blog/feed.xml
+    type: rss
+    description: AI research and model releases
+    language: zh
+    priority: 10
+
+  - name: ReadHub Daily
+    url: https://readhub.cn/rss
+    type: rss
+    description: Developer news and resources
+    language: zh
+    priority: 8
+
+  - name: 36Kr Hot List
+    url: https://36kr.com/feed
+    type: rss
+    description: 36Kr community hot news
+    language: zh
+    priority: 7
+
+  - name: SSPAI Index
+    url: https://sspai.com/feed
+    type: rss
+    description: AI startup and product news
+    language: zh
+    priority: 8
+
+  - name: SSPAI Matrix
+    url: https://sspai.com/feed
+    type: rss
+    description: AI product matrix comparison
+    language: zh
+    priority: 8
+
+  - name: Meituan Tech
+    url: https://tech.meituan.com/feed
+    type: rss
+    description: Meituan technology news
+    language: zh
+    priority: 6
+```
+
+### International RSS Feeds
+
+```yaml
+sources:
+  - name: TechCrunch
+    url: https://techcrunch.com/feed/
+    type: rss
+    description: Startup and tech news
+    language: en
+    priority: 10
+
+  - name: Ars Technica
+    url: https://feeds.arstechnica.com/arstechnica-index
+    type: rss
+    description: Tech news and reviews
+    language: en
+    priority: 10
+
+  - name: MIT Technology Review
+    url: https://www.technologyreview.com/feed
+    type: rss
+    description: MIT tech news
+    language: en
+    priority: 9
+```
+
+## Aggregator Sources
+
+### Main Aggregator
+
+```yaml
+sources:
+  - name: WaytoAI
+    url: https://waytoagi.feishu.cn/wiki/QPe5w5g7UisbEkkow8XcDmOpn8e?fromScene=spaceOverview
+    type: html
+    description: AI news aggregator (main source)
+    language: zh
+    selector: .wiki-page-title
+    field_selectors:
+      title: "h1"
+      url: "a"
+    max_articles: 50
+```
+
+### Other Aggregators
+
+```yaml
+sources:
+  - name: Zeli
+    url: https://zeli.app/
+    type: html
+    description: AI and general news
+    language: zh
+    selector: .entry
+    field_selectors:
+      title: "h2.title"
+      url: "a"
+    max_articles: 30
+```
+
+## OPML Configuration
+
+To add custom RSS feeds, place OPML file in the feeds directory:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="1.0">
+  <body>
+    <outline text="Custom RSS Feeds" title="Custom Feeds">
+      <outline text="My Custom Feed" type="rss" xmlUrl="https://example.com/feed.xml"/>
+      <outline text="Another Feed" type="rss" xmlUrl="https://another.com/feed.xml"/>
+    </outline>
+  </body>
+</opml>
+```
+
+## Source Priority Levels
+
+| Priority | Description | Example |
+|----------|-------------|---------|
+| **10** | Core, high-value sources | InfoQ, Hugging Face, TechCrunch |
+| **8-9** | Reliable secondary sources | ReadHub, Ars Technica |
+| **6-7** | Good quality sources | Meituan Tech, MIT Tech Review |
+| **5-6** | Supplemental sources | Community sites, blogs |
+
+## Notes
+
+- All RSS sources support incremental fetching via time filtering
+- HTML sources require CSS selectors for parsing
+- OPML files allow batch import of RSS subscriptions
+- Sources are filtered by AI keywords defined in keywords.yaml

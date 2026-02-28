@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="1.0">
+  <head>
+    <title>Custom RSS Feeds</title>
+    <ownerFullName>AI News Radar</ownerFullName>
+  </head>
+  <body>
+    <!-- Chinese AI/Tech RSS Feeds -->
+    <outline text="InfoQ AI" title="InfoQ AI 推荐">
+      <outline text="每周AI推荐" type="rss" xmlUrl="https://www.infoq.cn/feed/ai/weekly"/>
+    </outline>
+    <outline text="InfoQ Daily" title="InfoQ 每日推荐">
+      <outline text="每日推荐" type="rss" xmlUrl="https://www.infoq.cn/feed/ai/daily"/>
+    </outline>
+    <outline text="ReadHub AI" title="ReadHub AI 专栏">
+      <outline text="AI开发专栏" type="rss" xmlUrl="https://readhub.cn/rss/ai/"/>
+    </outline>
+    <outline text="36Kr AI" title="36Kr AI热榜">
+      <outline text="AI技术热榜" type="rss" xmlUrl="https://36kr.com/feed/ai/"/>
+    </outline>
+  </body>
+</opml>

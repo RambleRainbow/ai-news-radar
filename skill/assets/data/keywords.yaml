@@ -1,0 +1,73 @@
+# AI News Keywords Configuration
+#
+# Keywords for filtering AI-related news articles.
+
+keywords:
+  # Core AI/ML Terms
+  primary:
+    - artificial intelligence
+    - machine learning
+    - deep learning
+    - neural network
+    - natural language processing
+    - computer vision
+    - transformer
+    - GPT
+    - LLM
+    - AGI
+    - generative AI
+
+  # Popular AI Services/Companies
+  secondary:
+    - chatgpt
+    - gpt-4
+    - gpt-3.5
+    - openai
+    - anthropic
+    - claude
+    - hugging face
+    - midjourney
+    - stable diffusion
+    - langchain
+    - autogpt
+
+  # Short Forms and Aliases
+  aliases:
+    - ai
+    - ml
+    - llm
+    - nlp
+    - cv
+    - agi
+
+  # Chinese AI Terms
+  chinese:
+    - 人工智能
+    - 机器学习
+    - 深度学习
+    - 神经网络
+    - 自然语言处理
+    - 计算机视觉
+    - 大模型
+    - 生成式 AI
+    - 语言模型
+    - 提示工程
+
+  # Research/Industry Terms
+  research:
+    - foundation model
+    - multimodal
+    - RLHF
+    - RAG
+    - fine-tuning
+    - LoRA
+    - attention mechanism
+    - reasoning
+
+  # Emerging Tech
+  emerging:
+    - agent
+    - autonomous agents
+    - AI agents
+    - cognitive architecture
+    - agentic workflow

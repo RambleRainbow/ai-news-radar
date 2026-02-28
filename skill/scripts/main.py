@@ -1,413 +1,151 @@
 #!/usr/bin/env python3
 """
-AI News Radar - Main entry point.
+AI News Radar - CLI entry point.
 
-This module provides the main API for aggregating AI news from multiple sources.
+This module provides the command-line interface for the AI News Radar.
+It uses the ai-news-radar package for all core functionality.
 """
 
-# Add src to path for imports
 import logging
-import sys
-from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
 
 import click
 
-script_dir = Path(__file__).resolve().parent.parent.parent
-src_path = script_dir / "src"
-if str(src_path) not in sys.path:
-    sys.path.insert(0, str(src_path))
+# Import from the ai-news-radar package
+# If not installed, add parent of src to path for development
+try:
+    from ai_news_radar import NewsRadar, RadarConfig, setup_logger
+except ImportError:
+    import sys
 
-from config import RadarConfig, load_default_config  # noqa: E402
-from filters.ai_topic_filter import AITopicFilter  # noqa: E402
-from filters.duplicate_filter import DuplicateFilter  # noqa: E402
-from filters.time_filter import TimeFilter  # noqa: E402
-from parsers.html_parser import HTMLParser  # noqa: E402
-from parsers.rss_parser import RSSParser  # noqa: E402
-from storage.json_storage import JSONStorage  # noqa: E402
+    # Add parent of src to sys.path so we can import from src as a package
+    project_root = Path(__file__).resolve().parent.parent.parent
+    if str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
+
+    from src.config import RadarConfig
+    from src.core import NewsRadar, setup_logger
+
 
 logger = logging.getLogger(__name__)
 
 
-class NewsRadar:
+def get_default_config() -> RadarConfig:
     """
-    Main AI news aggregator class.
+    Get default configuration with correct paths for skill structure.
 
-    Coordinates fetching, parsing, filtering, and storing of AI news articles.
+    Returns:
+        RadarConfig instance with skill-specific paths
+    """
+    script_dir = Path(__file__).resolve().parent.parent
+    return RadarConfig(
+        sources_file=script_dir / "assets" / "data" / "sources.yaml",
+        keywords_file=script_dir / "assets" / "data" / "keywords.yaml",
+    )
+
+
+@click.command()
+@click.option(
+    "--output",
+    "-o",
+    default="news.json",
+    help="Output file path",
+)
+@click.option(
+    "--config",
+    "-c",
+    type=click.Path(exists=True),
+    help="Custom configuration file",
+)
+@click.option(
+    "--format",
+    "-f",
+    type=click.Choice(["json", "csv"]),
+    default="json",
+    help="Output format",
+)
+@click.option(
+    "--verbose",
+    "-v",
+    is_flag=True,
+    help="Enable verbose logging",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Show what would be done without executing",
+)
+@click.option(
+    "--since",
+    type=int,
+    default=24,
+    help="Only fetch articles from last N hours",
+)
+@click.option(
+    "--max-per-source",
+    type=int,
+    help="Maximum articles per source",
+)
+def cli(output, config, format, verbose, dry_run, since, max_per_source):
+    """
+    AI News Radar - Aggregate AI/tech news from multiple sources.
+
+    This is the CLI entry point for the AI News Radar skill.
+    For API usage, import the ai-news-radar package directly.
     """
 
-    def __init__(self, config: Optional[RadarConfig] = None):
-        """
-        Initialize the news radar.
+    # Setup logging
+    setup_logger("ai_news_radar", level=logging.DEBUG if verbose else logging.INFO, verbose=verbose)
 
-        Args:
-            config: Configuration object (uses default if None)
-        """
-        self.config = config or load_default_config()
-        self.config.ensure_directories()
+    # Load config
+    if config:
+        radar_config = RadarConfig.from_yaml(Path(config))
+    else:
+        radar_config = get_default_config()
 
-        # Initialize parsers
-        self.rss_parser = RSSParser(
-            {
-                "timeout": self.config.request_timeout,
-                "user_agent": self.config.user_agent,
-                "proxies": self.config.proxies,
-            }
-        )
+    # Override settings
+    radar_config.update_interval_hours = since
+    if max_per_source:
+        radar_config.max_articles_per_source = max_per_source
+    radar_config.verbose = verbose
+    radar_config.dry_run = dry_run
 
-        self.html_parser = HTMLParser(
-            {
-                "timeout": self.config.request_timeout,
-                "user_agent": self.config.user_agent,
-                "proxies": self.config.proxies,
-            }
-        )
+    # Create radar
+    radar = NewsRadar(radar_config)
 
-        # Initialize filters
-        self.ai_filter = AITopicFilter(keywords_file=self.config.keywords_file)
-        self.time_filter = TimeFilter(hours=self.config.update_interval_hours)
-        self.duplicate_filter = DuplicateFilter(
-            by_url=self.config.enable_deduplication,
-        )
-
-        # Statistics
-        self.stats = {
-            "total_fetched": 0,
-            "total_filtered": 0,
-            "total_kept": 0,
-            "sources_processed": 0,
-            "sources_failed": 0,
-        }
-
-    def aggregate(self) -> List[Dict[str, Any]]:
-        """
-        Aggregate news from all configured sources.
-
-        Returns:
-            List of filtered article dictionaries
-        """
-        logger.info("Starting news aggregation...")
-
-        all_articles = []
-        sources = self.config.load_sources()
-
-        if not sources:
-            logger.warning("No sources configured, returning empty list")
-            return []
-
+    if dry_run:
+        click.echo("Dry run mode - would process the following:")
+        sources = radar_config.load_sources()
         for source in sources:
-            articles = self._process_source(source)
-            all_articles.extend(articles)
+            click.echo(f"  - {source.get('name')}: {source.get('url')}")
+        return
 
-        self.stats["total_fetched"] = len(all_articles)
+    # Aggregate
+    click.echo("Aggregating news...")
+    result = radar.aggregate_with_stats()
 
-        # Apply filters
-        filtered = self._apply_filters(all_articles)
-        self.stats["total_kept"] = len(filtered)
+    articles = result["articles"]
+    stats = result["stats"]
 
-        logger.info(
-            f"Aggregation complete: {self.stats['total_kept']}/"
-            f"{self.stats['total_fetched']} articles kept"
-        )
+    # Save output
+    if format == "json":
+        radar.save_to_json(articles, output)
+    elif format == "csv":
+        radar.save_to_csv(articles, output)
 
-        return filtered
-
-    def aggregate_with_stats(self) -> Dict[str, Any]:
-        """
-        Aggregate news and return detailed statistics.
-
-        Returns:
-            Dictionary containing articles and statistics
-        """
-        start_time = datetime.now(timezone.utc)
-
-        articles = self.aggregate()
-
-        end_time = datetime.now(timezone.utc)
-        duration = (end_time - start_time).total_seconds()
-
-        return {
-            "articles": articles,
-            "stats": {
-                **self.stats,
-                "duration": duration,
-                "generated_at": end_time.isoformat(),
-            },
-        }
-
-    def _process_source(self, source: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """
-        Process a single news source.
-
-        Args:
-            source: Source configuration dictionary
-
-        Returns:
-            List of parsed articles
-        """
-        name = source.get("name", "Unknown")
-        url = source.get("url", "")
-        source_type = source.get("type", "rss")
-
-        logger.info(f"Processing source: {name} ({source_type})")
-
-        try:
-            if source_type == "rss":
-                parser = self.rss_parser
-                kwargs = {
-                    "max_entries": source.get(
-                        "max_articles", self.config.max_articles_per_source
-                    ),
-                }
-            elif source_type == "html":
-                parser = self.html_parser
-                kwargs = {
-                    "selector": source.get("selector"),
-                    "max_articles": source.get(
-                        "max_articles", self.config.max_articles_per_source
-                    ),
-                    "field_selectors": source.get("field_selectors", {}),
-                }
-            elif source_type == "opml":
-                # OPML file - parse feeds from it
-                feeds = self.rss_parser.parse_opml(source.get("file_path", url))
-                articles = []
-                for feed in feeds[: source.get("max_feeds", 10)]:
-                    feed_articles = self.rss_parser.fetch_and_parse(
-                        feed["url"],
-                        source_name=feed.get("title"),
-                        max_entries=source.get("max_articles_per_feed", 10),
-                    )
-                    articles.extend(feed_articles)
-                self.stats["sources_processed"] += 1
-                return articles
-            else:
-                logger.warning(f"Unknown source type: {source_type}")
-                self.stats["sources_failed"] += 1
-                return []
-
-            articles = parser.fetch_and_parse(url, **kwargs)
-            self.stats["sources_processed"] += 1
-
-            # Add source name to articles if not set
-            for article in articles:
-                if not article.get("source"):
-                    article["source"] = name
-
-            logger.info(f"Fetched {len(articles)} articles from {name}")
-            return articles
-
-        except Exception as e:
-            logger.error(f"Failed to process source {name}: {e}")
-            self.stats["sources_failed"] += 1
-            return []
-
-    def _apply_filters(self, articles: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """
-        Apply all configured filters to articles.
-
-        Args:
-            articles: List of article dictionaries
-
-        Returns:
-            Filtered list of articles
-        """
-        filtered = articles
-
-        # Time filter
-        filtered = self.time_filter.filter(filtered)
-
-        # AI topic filter
-        filtered = self.ai_filter.filter(filtered)
-
-        # Duplicate filter
-        if self.config.enable_deduplication:
-            filtered = self.duplicate_filter.filter(filtered)
-
-        self.stats["total_filtered"] = len(articles) - len(filtered)
-
-        return filtered
-
-    def add_source(self, source: Dict[str, Any]) -> None:
-        """
-        Add a new source configuration.
-
-        Args:
-            source: Source configuration dictionary
-        """
-        sources = self.config.load_sources()
-        sources.append(source)
-
-        # Note: In a full implementation, this would save back to the sources file
-        logger.info(f"Added source: {source.get('name')}")
-
-    def save_to_json(self, articles: List[Dict[str, Any]], path: str) -> None:
-        """
-        Save articles to JSON file.
-
-        Args:
-            articles: List of article dictionaries
-            path: Output file path
-        """
-        storage = JSONStorage(Path(path))
-        storage.save(articles)
-
-    def save_to_csv(self, articles: List[Dict[str, Any]], path: str) -> None:
-        """
-        Save articles to CSV file.
-
-        Args:
-            articles: List of article dictionaries
-            path: Output file path
-        """
-        import csv
-
-        path = Path(path)
-        path.parent.mkdir(parents=True, exist_ok=True)
-
-        if not articles:
-            logger.warning("No articles to save")
-            return
-
-        # Get all unique keys
-        fieldnames = set()
-        for article in articles:
-            for key in article.keys():
-                if not key.startswith("_"):
-                    fieldnames.add(key)
-
-        # Sort fieldnames for consistent output
-        fieldnames = sorted(fieldnames)
-
-        with open(path, "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
-            writer.writeheader()
-
-            for article in articles:
-                # Prepare row
-                row = {}
-                for key in fieldnames:
-                    value = article.get(key, "")
-                    if isinstance(value, (list, dict)):
-                        value = str(value)
-                    elif isinstance(value, datetime):
-                        value = value.isoformat()
-                    row[key] = value
-
-                writer.writerow(row)
-
-        logger.info(f"Saved {len(articles)} articles to {path}")
+    # Print summary
+    click.echo("\nSummary:")
+    click.echo(f"  Total articles: {stats['total_fetched']}")
+    click.echo(f"  After filtering: {stats['total_kept']}")
+    click.echo(f"  Sources processed: {stats['sources_processed']}")
+    click.echo(f"  Sources failed: {stats['sources_failed']}")
+    click.echo(f"  Duration: {stats['duration']:.2f}s")
+    click.echo(f"\nOutput saved to: {output}")
 
 
 def main():
     """Main entry point for command-line usage."""
-
-    @click.command()
-    @click.option(
-        "--output",
-        "-o",
-        default="news.json",
-        help="Output file path",
-    )
-    @click.option(
-        "--config",
-        "-c",
-        type=click.Path(exists=True),
-        help="Custom configuration file",
-    )
-    @click.option(
-        "--format",
-        "-f",
-        type=click.Choice(["json", "csv"]),
-        default="json",
-        help="Output format",
-    )
-    @click.option(
-        "--verbose",
-        "-v",
-        is_flag=True,
-        help="Enable verbose logging",
-    )
-    @click.option(
-        "--dry-run",
-        is_flag=True,
-        help="Show what would be done without executing",
-    )
-    @click.option(
-        "--since",
-        type=int,
-        default=24,
-        help="Only fetch articles from last N hours",
-    )
-    @click.option(
-        "--max-per-source",
-        type=int,
-        help="Maximum articles per source",
-    )
-    def cli(output, config, format, verbose, dry_run, since, max_per_source):
-        """AI News Radar - Aggregate AI/tech news from multiple sources."""
-
-        # Setup logging
-        setup_logger(verbose=verbose)
-
-        # Load config
-        if config:
-            radar_config = RadarConfig.from_yaml(Path(config))
-        else:
-            radar_config = load_default_config()
-
-        # Override settings
-        radar_config.update_interval_hours = since
-        if max_per_source:
-            radar_config.max_articles_per_source = max_per_source
-        radar_config.verbose = verbose
-        radar_config.dry_run = dry_run
-
-        # Create radar
-        radar = NewsRadar(radar_config)
-
-        if dry_run:
-            click.echo("Dry run mode - would process the following:")
-            sources = radar_config.load_sources()
-            for source in sources:
-                click.echo(f"  - {source.get('name')}: {source.get('url')}")
-            return
-
-        # Aggregate
-        click.echo("Aggregating news...")
-        result = radar.aggregate_with_stats()
-
-        articles = result["articles"]
-        stats = result["stats"]
-
-        # Save output
-        if format == "json":
-            radar.save_to_json(articles, output)
-        elif format == "csv":
-            radar.save_to_csv(articles, output)
-
-        # Print summary
-        click.echo("\nSummary:")
-        click.echo(f"  Total articles: {stats['total_fetched']}")
-        click.echo(f"  After filtering: {stats['total_kept']}")
-        click.echo(f"  Sources processed: {stats['sources_processed']}")
-        click.echo(f"  Sources failed: {stats['sources_failed']}")
-        click.echo(f"  Duration: {stats['duration']:.2f}s")
-        click.echo(f"\nOutput saved to: {output}")
-
     cli()
-
-
-def setup_logger(verbose: bool = False):
-    """Setup logging."""
-    from utils.logger import setup_logger as _setup_logger
-
-    return _setup_logger(
-        "ai_news_radar",
-        level=logging.DEBUG if verbose else logging.INFO,
-        verbose=verbose,
-    )
 
 
 if __name__ == "__main__":

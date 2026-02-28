@@ -11,7 +11,7 @@ from typing import Any, Dict, Generator, List
 import pytest
 import yaml
 
-# Add src to path for imports
+# Add src to path for imports (for development mode)
 project_root = Path(__file__).resolve().parent.parent
 src_path = project_root / "src"
 if str(src_path) not in sys.path:
@@ -182,3 +182,23 @@ def setup_test_data_files(fixtures_dir: Path):
         }
         with open(test_keywords_file, "w", encoding="utf-8") as f:
             yaml.dump(test_keywords, f)
+
+
+@pytest.fixture
+def test_keywords_file(temp_dir: Path) -> Path:
+    """Create a test keywords file for testing."""
+    keywords_file = temp_dir / "test_keywords.yaml"
+    test_keywords = {
+        "keywords": {
+            "primary": [
+                "artificial intelligence",
+                "machine learning",
+                "deep learning",
+            ],
+            "secondary": ["chatgpt", "gpt", "openai", "anthropic"],
+            "aliases": ["ai", "ml", "llm"],
+        }
+    }
+    with open(keywords_file, "w", encoding="utf-8") as f:
+        yaml.dump(test_keywords, f)
+    return keywords_file

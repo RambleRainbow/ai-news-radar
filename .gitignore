@@ -19,11 +19,13 @@ htmlcov/
 *.swo
 
 # Data
+# Ignore root data/ directory, but track skill/assets/data/
 data/
 *.json
 *.log
 
-# OS
+# Skill assets (tracked)
+!skill/assets/data/
 .DS_Store
 Thumbs.db
 

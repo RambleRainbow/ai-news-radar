@@ -2,46 +2,29 @@
 """
 AI News Radar - CLI entry point.
 
-This module provides the command-line interface for the AI News Radar.
-It uses the ai-news-radar package for all core functionality.
+This module provides the command-line interface for AI News Radar.
+It uses the skill package which is self-contained.
 """
 
 import logging
+import sys
 from pathlib import Path
 
 import click
 
-# Import from the ai-news-radar package
-# If not installed, add parent of src to path for development
-try:
-    from ai_news_radar import NewsRadar, RadarConfig, setup_logger
-except ImportError:
-    import sys
+# Add project root to sys.path for imports
+# When running from skill/scripts/, we need to add project root to sys.path
+# to import from the skill package
+project_root = Path(__file__).resolve().parent.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
 
-    # Add parent of src to sys.path so we can import from src as a package
-    project_root = Path(__file__).resolve().parent.parent.parent
-    if str(project_root) not in sys.path:
-        sys.path.insert(0, str(project_root))
-
-    from src.config import RadarConfig
-    from src.core import NewsRadar, setup_logger
+# Import from the skill package (self-contained)
+from skill.config import RadarConfig, load_default_config
+from skill.core.news_radar import NewsRadar, setup_logger
 
 
 logger = logging.getLogger(__name__)
-
-
-def get_default_config() -> RadarConfig:
-    """
-    Get default configuration with correct paths for skill structure.
-
-    Returns:
-        RadarConfig instance with skill-specific paths
-    """
-    script_dir = Path(__file__).resolve().parent.parent
-    return RadarConfig(
-        sources_file=script_dir / "assets" / "data" / "sources.yaml",
-        keywords_file=script_dir / "assets" / "data" / "keywords.yaml",
-    )
 
 
 @click.command()
@@ -91,7 +74,6 @@ def cli(output, config, format, verbose, dry_run, since, max_per_source):
     AI News Radar - Aggregate AI/tech news from multiple sources.
 
     This is the CLI entry point for the AI News Radar skill.
-    For API usage, import the ai-news-radar package directly.
     """
 
     # Setup logging
@@ -101,7 +83,11 @@ def cli(output, config, format, verbose, dry_run, since, max_per_source):
     if config:
         radar_config = RadarConfig.from_yaml(Path(config))
     else:
-        radar_config = get_default_config()
+        script_dir = Path(__file__).resolve().parent.parent
+        radar_config = load_default_config()
+        # Override default paths to be relative to skill directory
+        radar_config.sources_file = script_dir / "assets" / "data" / "sources.yaml"
+        radar_config.keywords_file = script_dir / "assets" / "data" / "keywords.yaml"
 
     # Override settings
     radar_config.update_interval_hours = since

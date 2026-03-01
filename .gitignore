@@ -39,3 +39,5 @@ news*.csv
 
 # Cache
 .cache/
+# Task tracking
+!tasks/

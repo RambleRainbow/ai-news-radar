@@ -4,7 +4,7 @@ Tests for cache utilities.
 
 from datetime import datetime, timedelta
 
-from src.utils.cache import CacheManager
+from skill.utils.cache import CacheManager
 
 
 class TestCacheManager:

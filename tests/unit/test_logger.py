@@ -4,7 +4,7 @@ Tests for logger utilities.
 
 import logging
 
-from src.utils.logger import setup_logger
+from skill.utils.logger import setup_logger
 
 
 class TestSetupLogger:

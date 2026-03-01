@@ -6,8 +6,8 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-from src.core import NewsRadar, setup_logger
-from src.config import RadarConfig
+from skill.core import NewsRadar, setup_logger
+from skill.config import RadarConfig
 
 
 class TestNewsRadar:
@@ -35,7 +35,7 @@ class TestNewsRadar:
             assert radar.config is not None
             assert isinstance(radar.config, RadarConfig)
 
-    @patch("src.core.RadarConfig.load_sources")
+    @patch("skill.config.RadarConfig.load_sources")
     def test_aggregate_no_sources(self, mock_load_sources, temp_dir):
         """Test aggregation with no configured sources."""
         mock_load_sources.return_value = []
@@ -44,7 +44,7 @@ class TestNewsRadar:
         result = radar.aggregate()
         assert result == []
 
-    @patch("src.core.RadarConfig.load_sources")
+    @patch("skill.config.RadarConfig.load_sources")
     def test_aggregate_with_sources(
         self, mock_load_sources, temp_dir, sample_articles
     ):
@@ -67,7 +67,7 @@ class TestNewsRadar:
                 assert radar.stats["total_fetched"] == 3
                 assert radar.stats["sources_processed"] == 1
 
-    @patch("src.core.RadarConfig.load_sources")
+    @patch("skill.config.RadarConfig.load_sources")
     def test_aggregate_with_stats(self, mock_load_sources, temp_dir, sample_articles):
         """Test aggregation returns detailed statistics."""
         mock_load_sources.return_value = [
@@ -89,7 +89,7 @@ class TestNewsRadar:
                 assert "duration" in result["stats"]
                 assert "generated_at" in result["stats"]
 
-    @patch("src.core.RadarConfig.load_sources")
+    @patch("skill.config.RadarConfig.load_sources")
     def test_process_source_rss(self, mock_load_sources, temp_dir):
         """Test processing RSS source."""
         mock_load_sources.return_value = []
@@ -106,7 +106,7 @@ class TestNewsRadar:
             assert result == []
             assert radar.stats["sources_processed"] == 1
 
-    @patch("src.core.RadarConfig.load_sources")
+    @patch("skill.config.RadarConfig.load_sources")
     def test_process_source_html(self, mock_load_sources, temp_dir):
         """Test processing HTML source."""
         mock_load_sources.return_value = []
@@ -124,7 +124,7 @@ class TestNewsRadar:
             assert result == []
             assert radar.stats["sources_processed"] == 1
 
-    @patch("src.core.RadarConfig.load_sources")
+    @patch("skill.config.RadarConfig.load_sources")
     def test_process_source_opml(self, mock_load_sources, temp_dir):
         """Test processing OPML source."""
         mock_load_sources.return_value = []
@@ -147,7 +147,7 @@ class TestNewsRadar:
                 assert result == []
                 assert radar.stats["sources_processed"] == 1
 
-    @patch("src.core.RadarConfig.load_sources")
+    @patch("skill.config.RadarConfig.load_sources")
     def test_process_source_unknown_type(self, mock_load_sources, temp_dir):
         """Test processing source with unknown type."""
         mock_load_sources.return_value = []
@@ -158,7 +158,7 @@ class TestNewsRadar:
         assert result == []
         assert radar.stats["sources_failed"] == 1
 
-    @patch("src.core.RadarConfig.load_sources")
+    @patch("skill.config.RadarConfig.load_sources")
     def test_process_source_error(self, mock_load_sources, temp_dir):
         """Test processing source that raises an error."""
         mock_load_sources.return_value = []
@@ -170,7 +170,7 @@ class TestNewsRadar:
             assert result == []
             assert radar.stats["sources_failed"] == 1
 
-    @patch("src.core.RadarConfig.load_sources")
+    @patch("skill.config.RadarConfig.load_sources")
     def test_process_source_adds_source_name(self, mock_load_sources, temp_dir):
         """Test that source name is added to articles."""
         mock_load_sources.return_value = []
@@ -182,7 +182,7 @@ class TestNewsRadar:
             result = radar._process_source(source)
             assert result[0]["source"] == "Test Source"
 
-    @patch("src.core.RadarConfig.load_sources")
+    @patch("skill.config.RadarConfig.load_sources")
     def test_apply_filters(self, mock_load_sources, temp_dir, sample_articles):
         """Test applying all filters."""
         mock_load_sources.return_value = []
@@ -195,7 +195,7 @@ class TestNewsRadar:
                     assert result == sample_articles
                     assert radar.stats["total_filtered"] == 0
 
-    @patch("src.core.RadarConfig.load_sources")
+    @patch("skill.config.RadarConfig.load_sources")
     def test_apply_filters_without_dedup(self, mock_load_sources, temp_dir):
         """Test applying filters without deduplication."""
         mock_load_sources.return_value = []
@@ -207,7 +207,7 @@ class TestNewsRadar:
                 result = radar._apply_filters(articles)
                 assert result == articles
 
-    @patch("src.core.RadarConfig.load_sources")
+    @patch("skill.config.RadarConfig.load_sources")
     def test_add_source(self, mock_load_sources, temp_dir):
         """Test adding a new source."""
         mock_load_sources.return_value = []
@@ -219,7 +219,7 @@ class TestNewsRadar:
         sources = config.load_sources()
         assert len(sources) >= 1
 
-    @patch("src.core.RadarConfig.load_sources")
+    @patch("skill.config.RadarConfig.load_sources")
     def test_save_to_json(self, mock_load_sources, temp_dir):
         """Test saving articles to JSON file."""
         mock_load_sources.return_value = []
@@ -230,7 +230,7 @@ class TestNewsRadar:
         radar.save_to_json(articles, str(output_path))
         assert output_path.exists()
 
-    @patch("src.core.RadarConfig.load_sources")
+    @patch("skill.config.RadarConfig.load_sources")
     def test_save_to_csv(self, mock_load_sources, temp_dir):
         """Test saving articles to CSV file."""
         mock_load_sources.return_value = []

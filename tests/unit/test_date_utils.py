@@ -3,7 +3,7 @@ Tests for date utilities.
 """
 
 from datetime import datetime, timedelta, timezone
-from src.utils.date_utils import (
+from skill.utils.date_utils import (
     format_date,
     get_time_range,
     is_recent,

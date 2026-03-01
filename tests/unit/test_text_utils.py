@@ -2,7 +2,7 @@
 Tests for text utilities.
 """
 
-from src.utils.text_utils import (
+from skill.utils.text_utils import (
     clean_text,
     detect_language,
     extract_keywords,

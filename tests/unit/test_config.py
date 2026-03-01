@@ -4,7 +4,7 @@ Tests for configuration management.
 
 from pathlib import Path
 
-from src.config import RadarConfig, load_default_config
+from skill.config import RadarConfig, load_default_config
 
 
 class TestRadarConfig:

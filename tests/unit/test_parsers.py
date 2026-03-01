@@ -2,8 +2,8 @@
 Tests for parser modules.
 """
 
-from src.parsers.html_parser import HTMLParser
-from src.parsers.rss_parser import RSSParser
+from skill.parsers.html_parser import HTMLParser
+from skill.parsers.rss_parser import RSSParser
 
 
 class TestRSSParser:
@@ -60,7 +60,7 @@ class TestRSSParser:
     def test_fetch_with_error(self):
         """Test fetch with invalid URL."""
         parser = RSSParser()
-        from src.parsers.base_parser import FetchError
+        from skill.parsers.base_parser import FetchError
 
         try:
             parser.fetch("not-a-valid-url")

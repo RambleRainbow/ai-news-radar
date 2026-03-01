@@ -1,0 +1,16 @@
+{
+  "subject": "Add news persistence support",
+  "description": "Implement ability to save and load previously aggregated news articles",
+  "activeForm": "Implement JSON storage with save/load methods in skill/storage/",
+  "status": "pending",
+  "assignee": "team-lead"
+}
+' && cat > .claude/teams/ai-news-radar-feature-dev/tasks/FEATURE-multiple-commands.json <<'EOF'
+{
+  "subject": "Add multiple command support",
+  "description": "Extend skill/scripts/main.py to support multiple commands like --list, --clear, --backup",
+  "activeForm": "Add click commands and argument groups",
+  "status": "pending",
+  "assignee": "team-lead"
+}
+' && ls .claude/teams/ai-news-radar-feature-dev/tasks/ 2>&1

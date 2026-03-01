@@ -1,0 +1,32 @@
+{
+  "subject": "Add multiple command support",
+  "description": "Extend skill/scripts/main.py to support multiple commands like --list, --clear, --backup",
+  "activeForm": "Add click commands and argument groups",
+  "status": "pending",
+  "assignee": "team-lead"
+}
+' && cat > .claude/teams/ai-news-radar-feature-dev/tasks/FEATURE-incremental-update.json <<'EOF'
+{
+  "subject": "Add incremental update support",
+  "description": "Implement incremental fetching that only adds new articles since last run",
+  "activeForm": "Add time-based filtering to only fetch articles newer than last run",
+  "status": "pending",
+  "assignee": "team-lead"
+}
+' && cat > .claude/teams/ai-news-radar-feature-dev/tasks/FEATURE-archiving.json <<'EOF'
+{
+  "subject": "Add archiving support",
+  "description": "Move old articles to archive files with configurable retention period",
+  "activeForm": "Add archive command and retention period configuration",
+  "status": "pending",
+  "assignee": "team-lead"
+}
+' && cat > .claude/teams/ai-news-radar-feature-dev/tasks/FEATURE-export-format.json <<'EOF'
+{
+  "subject": "Add export format support",
+  "description": "Support multiple export formats (CSV, RSS feed generation)",
+  "activeForm": "Add export command with format option",
+  "status": "pending",
+  "assignee": "team-lead"
+}
+' && ls .claude/teams/ai-news-radar-feature-dev/tasks/ 2>&1

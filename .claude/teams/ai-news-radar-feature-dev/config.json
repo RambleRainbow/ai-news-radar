@@ -1,0 +1,6 @@
+{
+  "team_name": "ai-news-radar-feature-dev",
+  "description": "AI News Radar FEATURE Development Team",
+  "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+}
+' && cat .claude/teams/ai-news-radar-feature-dev/config.json

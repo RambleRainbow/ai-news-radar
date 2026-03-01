@@ -3,6 +3,7 @@ Tests for the NewsRadar core class.
 """
 
 import tempfile
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from unittest.mock import patch
 
@@ -243,6 +244,62 @@ class TestNewsRadar:
         output_path = temp_dir / "output.csv"
         radar.save_to_csv(articles, str(output_path))
         assert output_path.exists()
+
+    @patch("skill.config.RadarConfig.load_sources")
+    def test_aggregate_incremental_no_state(self, mock_load_sources, temp_dir):
+        """Test incremental aggregation without state file falls back to normal."""
+        mock_load_sources.return_value = []
+        config = RadarConfig(cache_dir=temp_dir / "cache")
+        radar = NewsRadar(config)
+
+        # Should return normal aggregation since no state file
+        result = radar.aggregate_incremental(temp_dir / "data.json")
+        assert result == []
+
+    def test_filter_by_time(self, temp_dir):
+        """Test filtering articles by time."""
+        config = RadarConfig(cache_dir=temp_dir / "cache")
+        radar = NewsRadar(config)
+
+        now = datetime.now(timezone.utc)
+        articles = [
+            {"title": "Old", "date": (now - timedelta(hours=48)).isoformat()},
+            {"title": "Recent", "date": (now - timedelta(hours=2)).isoformat()},
+            {"title": "Newest", "date": (now - timedelta(minutes=30)).isoformat()},
+        ]
+
+        cutoff = now - timedelta(hours=4)
+        filtered = radar._filter_by_time(articles, cutoff)
+
+        assert len(filtered) == 2
+        assert all(a["title"] != "Old" for a in filtered)
+
+    def test_filter_by_time_with_missing_dates(self, temp_dir):
+        """Test that articles without dates are included."""
+        config = RadarConfig(cache_dir=temp_dir / "cache")
+        radar = NewsRadar(config)
+
+        now = datetime.now(timezone.utc)
+        articles = [
+            {"title": "No date"},  # Should be included
+            {"title": "Old", "date": (now - timedelta(hours=48)).isoformat()},
+            {"title": "Recent", "date": (now - timedelta(hours=2)).isoformat()},
+        ]
+
+        cutoff = now - timedelta(hours=4)
+        filtered = radar._filter_by_time(articles, cutoff)
+
+        # Articles without date are included (conservative)
+        assert any(a["title"] == "No date" for a in filtered)
+
+    def test_init_with_state_file(self, temp_dir):
+        """Test initialization with state file."""
+        state_file = temp_dir / "state.json"
+        config = RadarConfig(cache_dir=temp_dir / "cache")
+        radar = NewsRadar(config, state_file=state_file)
+
+        assert radar.state is not None
+        assert radar.state.state_file == state_file
 
 
 class TestSetupLogger:

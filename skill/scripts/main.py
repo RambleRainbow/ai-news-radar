@@ -90,13 +90,25 @@ def cli(ctx: click.Context, config: Optional[str], verbose: bool):
     help="Maximum articles per source",
 )
 @click.option(
+    "--incremental",
+    "-i",
+    is_flag=True,
+    help="Fetch only new articles since last run (uses state file)",
+)
+@click.option(
+    "--state-file",
+    type=click.Path(),
+    help="Custom state file for tracking incremental updates",
+)
+@click.option(
     "--dry-run",
     is_flag=True,
     help="Show what would be done without executing",
 )
 @click.pass_context
 def fetch(ctx: click.Context, output: str, format: str, since: int,
-          max_per_source: Optional[int], dry_run: bool):
+          max_per_source: Optional[int], incremental: bool, state_file: Optional[str],
+          dry_run: bool):
     """
     Fetch and aggregate news from configured sources.
 
@@ -105,6 +117,8 @@ def fetch(ctx: click.Context, output: str, format: str, since: int,
         radar fetch                      # Fetch and save to news.json
         radar fetch -o news.csv -f csv  # Save as CSV
         radar fetch --since 12           # Fetch articles from last 12 hours
+        radar fetch --incremental         # Fetch only new articles since last run
+        radar fetch -i -o news.json     # Same as above with short flag
     """
     config = ctx.obj["config"]
 
@@ -114,8 +128,20 @@ def fetch(ctx: click.Context, output: str, format: str, since: int,
         config.max_articles_per_source = max_per_source
     config.dry_run = dry_run
 
+    # Set state file for incremental mode
+    if incremental:
+        if state_file:
+            state_path = Path(state_file)
+        else:
+            # Use default state file in cache directory
+            state_path = config.cache_dir / "radar_state.json"
+            config.state_file = state_path
+
     # Create radar
-    radar = NewsRadar(config)
+    if incremental:
+        radar = NewsRadar(config, state_file=state_path)
+    else:
+        radar = NewsRadar(config)
 
     if dry_run:
         click.echo("Dry run mode - would process the following:")
@@ -124,15 +150,39 @@ def fetch(ctx: click.Context, output: str, format: str, since: int,
             click.echo(f"  - {source.get('name')}: {source.get('url')}")
         return
 
+    output_path = Path(output)
+
     # Aggregate
-    click.echo("Aggregating news...")
-    result = radar.aggregate_with_stats()
+    if incremental:
+        if not output_path.exists():
+            click.echo(f"Note: Output file '{output}' doesn't exist, fetching all articles...")
+            result = radar.aggregate_with_stats()
+        else:
+            click.echo("Aggregating news incrementally...")
+            result = radar.aggregate_incremental_with_stats(output_path)
+    else:
+        click.echo("Aggregating news...")
+        result = radar.aggregate_with_stats()
 
     articles = result["articles"]
     stats = result["stats"]
 
     # Save output
-    output_path = Path(output)
+    if format == "json":
+        radar.save_to_json(articles, output_path)
+    elif format == "csv":
+        radar.save_to_csv(articles, output_path)
+
+    # Print summary
+    click.echo("\nSummary:")
+    click.echo(f"  Total articles: {stats['total_fetched']}")
+    if "new_articles" in stats:
+        click.echo(f"  New articles: {stats['new_articles']}")
+    click.echo(f"  After filtering: {stats['total_kept']}")
+    click.echo(f"  Sources processed: {stats['sources_processed']}")
+    click.echo(f"  Sources failed: {stats['sources_failed']}")
+    click.echo(f"  Duration: {stats['duration']:.2f}s")
+    click.echo(f"\nOutput saved to: {output}")
     if format == "json":
         radar.save_to_json(articles, output_path)
     elif format == "csv":
